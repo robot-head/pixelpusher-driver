@@ -1,0 +1,33 @@
+{
+  "name": "pixelpusherjs",
+  "version": "0.1",
+  "description": "Modernized pixelpusher library for Node",
+  "main": "cjs/index.js",
+  "repository": "https://github.com/rpearl/pixelpusherjs",
+  "author": "Ryan Pearl <rpearl@endofunctor.org>",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.0"
+  },
+  "module": "./src/index.js",
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  },
+  "scripts": {
+    "build": "babel src --out-dir cjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "ref-array": "^1.2.0"
+  }
+}
