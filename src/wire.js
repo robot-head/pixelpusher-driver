@@ -2,7 +2,7 @@ import { types } from 'ref';
 import Struct from 'ref-struct';
 import Array from 'ref-array';
 
-const uint8_buffer = Array(types.uint8);
+const uint8_buffer = (size) => Array(types.uint8, size);
 
 /*
 struct pusher_broadcast {
@@ -36,6 +36,12 @@ struct pusher_broadcast {
   uint16 last_driven_port;
 }
 */
+export const DeviceType = {
+    ETHERDREAM: 0,
+    LUMIABRIDGE: 1,
+    PIXELPUSHER: 2,
+};
+
 
 export const PusherBroadcast = Struct({
   mac: uint8_buffer(6),
@@ -47,23 +53,49 @@ export const PusherBroadcast = Struct({
   hardware_rev: types.uint16,
   software_rev: types.uint16,
   link_speed: types.uint32,
-  uint8  strips_attached;
-  uint8  max_strips_per_packet;
+  strips_attached: types.uint8,
+  max_strips_per_packet: types.uint8,
   pixels_per_strip: types.uint16,
   update_period: types.uint32,
-  powerotal: types.uint32,
+  powertotal: types.uint32,
   delta_sequence: types.uint32,
   controller_ordinal: types.int32,
   group_ordinal: types.int32,
   artnet_universe: types.uint16,
   artnet_channel: types.uint16,
   my_port: types.uint16,
-  padding1: types.uint16,
-  strip_flags: uint8_buffer(8),
-  padding2: types.uint16,
-  pusher_flags: types.uint32,
-  segments: types.uint32,
-  power_domain: types.uint32,
-  last_driven_ip: uint8_buffer(4),
-  last_driven_port: types.uint16,
-});
+  //padding1: types.uint16,
+  //strip_flags: uint8_buffer(8),
+  //padding2: types.uint16,
+  //pusher_flags: types.uint32,
+  //segments: types.uint32,
+  //power_domain: types.uint32,
+  //last_driven_ip: uint8_buffer(4),
+  //last_driven_port: types.uint16,
+}, { packed: true});
+
+console.log(PusherBroadcast.size);
+
+export default PusherBroadcast;
+
+export function macString(broadcast) {
+    return broadcast.mac.toArray().map((octet) => octet.toString(16)).join(':');
+}
+
+export function StripUpdate(num_pixels) {
+    return Struct({
+        strip_id: types.uint8,
+        pixel_data: uint8_buffer(3*num_pixels)
+    }, {packed: true});
+}
+
+export function StripPacket(num_strips, num_pixels) {
+    const StripUpdateArray = Array(StripUpdate(num_pixels), num_strips);
+
+    const packet = new Struct({
+        sequence_no: types.uint32,
+        strip_updates: StripUpdateArray
+    }, { packed: true });
+
+    return packet;
+}

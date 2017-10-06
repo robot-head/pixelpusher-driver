@@ -1,6 +1,6 @@
 {
   "name": "pixelpusherjs",
-  "version": "0.1",
+  "version": "0.1.0",
   "description": "Modernized pixelpusher library for Node",
   "main": "cjs/index.js",
   "repository": "https://github.com/rpearl/pixelpusherjs",
@@ -28,6 +28,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "ref-array": "^1.2.0"
+    "ref-array": "^1.2.0",
+    "ref-struct": "^1.1.0"
   }
 }
