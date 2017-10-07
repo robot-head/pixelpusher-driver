@@ -28,7 +28,6 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "ref-array": "^1.2.0",
-    "ref-struct": "^1.1.0"
+    "struct": "^0.0.12"
   }
 }

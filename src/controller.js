@@ -1,6 +1,5 @@
-import { StripPacket, macString } from './wire';
+import { StripPacket, macString, ipString } from './wire';
 import dgram from 'dgram';
-import ref from 'ref';
 
 export default class PixelPusher {
     constructor(broadcast) {
@@ -11,15 +10,40 @@ export default class PixelPusher {
         this.updateFromBroadcast(broadcast);
 
         this.strips = [];
+        this.correction = [];
+
         this.last_packet = undefined;
         this.packet_number = 0;
+        this.color_correction = [0xff, 0xe0, 0x8c];
+        this.color_temp = [0xff, 0xff, 0xff];
+        this._computeCorrection();
+    }
+
+    _computeCorrection() {
+        this.correction = this.color_temp.map((c,i) => (this.color_correction[i]*c)/0xffff);
+    }
+
+    setColorTemperature(c) {
+        this.color_temp = [(c >> 16) & 0xff, (c >> 8) & 0xff, (c >> 0) & 0xff];
+        this._computeCorrection();
+    }
+
+    setColorCorrection(c) {
+        this.color_correction = [(c >> 16) & 0xff, (c >> 8) & 0xff, (c >> 0) & 0xff];
+        this._computeCorrection();
+    }
+
+    applyCorrection(colorbuf) {
+        for (let i = 0; i < colorbuf.length; i++) {
+            colorbuf[i] *= this.correction[i%3];
+        }
     }
 
     updateFromBroadcast(broadcast) {
         this.updateVariables(broadcast);
 
         //network
-        const ip = broadcast.ip.toArray().map((octet) => octet.toString()).join('.');
+        const ip = ipString(broadcast);
         this.mac = macString(broadcast);
         this.ip = ip;
         this.port = broadcast.my_port || 9897;
@@ -42,44 +66,46 @@ export default class PixelPusher {
     }
 
     setStrip(strip, colorbuf) {
+        this.applyCorrection(colorbuf);
         this.strips.push([strip, colorbuf]);
     }
 
     _sendPacket() {
         if (this.strips.length == 0)
             return;
-        const strips_in_packet = Math.min(this.max_strips_per_packet, this.strips.length);
+        const num_strips = Math.min(this.max_strips_per_packet, this.strips.length);
+        const num_pixels = this.pixels_per_strip;
 
-        let packet = StripPacket(strips_in_packet, this.pixels_per_strip);
-        let buf = ref.alloc(packet);
+        let packet = Buffer.alloc(4 + num_strips*(3*num_pixels+1));
+        let offset = 0;
 
-        let msg = new packet(buf);
+        offset = packet.writeUInt32LE(this.packet_number++, offset);
 
-        msg.sequence_no = this.packet_number++;
-
-        for(let strip_idx = 0; strip_idx < strips_in_packet; strip_idx++) {
+        for(let strip_idx = 0; strip_idx < num_strips; strip_idx++) {
             const [strip, colorbuf] = this.strips.shift();
-            // copy faster...
-            for (let i = 0; i < this.pixels_per_strip; i++) {
-                msg.strip_updates[strip_idx].strip_id = strip;
-                msg.strip_updates[strip_idx].pixel_data[i] = colorbuf[i];
+            offset = packet.writeUInt8(strip, offset);
+            for (let i = 0; i < num_pixels*3; i++) {
+                offset = packet.writeUInt8(colorbuf[i], offset);
             }
         }
 
-        this.socket.send(buf, this.port, this.ip, (err) => {
+        this.socket.send(packet, this.port, this.ip, (err) => {
             if (err)
                 console.log('error sending pixels');
         });
     }
 
     sendloop() {
-        while (this.strips.length > 0) {
-            const start = process.hrtime();
-            this._sendPacket();
-            const [sec, ns] = process.hrtime(start);
-            const total_ms = (sec * 1e9 + ns) / 1000;
-            setTimeout(() => this.sendloop(), this.update_period - total_ms);
+
+        if (this.strips.length == 0) {
+            return;
         }
+
+        const start = process.hrtime();
+        this._sendPacket();
+        const [sec, ns] = process.hrtime(start);
+        const total_ms = (sec * 1e9 + ns) / 1000;
+        setTimeout(() => this.sendloop(), this.update_period - total_ms);
     }
 
     sync() {

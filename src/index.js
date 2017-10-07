@@ -14,8 +14,10 @@ export default class PixelPusherRegistry extends EventEmitter {
         this.socket = dgram.createSocket('udp4');
 
         this.socket.on('message', (message, rinfo) => {
-            message.type = PusherBroadcast;
-            let broadcast = message.deref();
+            const broadcast_struct = PusherBroadcast();
+            broadcast_struct._setBuff(message);
+
+            const broadcast = broadcast_struct.fields;
 
             if (broadcast.devicetype != DeviceType.PIXELPUSHER)
                 return;
@@ -45,7 +47,7 @@ export default class PixelPusherRegistry extends EventEmitter {
         for (let [mac, controller] of this.registry) {
             if (now - controller.last_ping_at > CONTROLLER_TIMEOUT_THRESHOLD) {
                 console.info(`Haven't heard from ${mac} in a while, pruning`);
-                this.registery.delete(mac);
+                this.registry.delete(mac);
                 this.emit('pruned', controller);
             }
         }
