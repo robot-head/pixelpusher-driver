@@ -1,9 +1,9 @@
 {
-  "name": "pixelpusherjs",
+  "name": "pixelpusher-driver",
   "version": "0.1.0",
   "description": "Modernized pixelpusher library for Node",
   "main": "cjs/index.js",
-  "repository": "https://github.com/rpearl/pixelpusherjs",
+  "repository": "https://github.com/chlorophyll/pixelpusher-driver",
   "author": "Ryan Pearl <rpearl@endofunctor.org>",
   "license": "MIT",
   "devDependencies": {
@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "babel src --out-dir cjs",
-    "prepublishOnly": "npm run build"
+    "install": "babel src --out-dir cjs"
   },
   "dependencies": {
     "struct": "^0.0.12"
