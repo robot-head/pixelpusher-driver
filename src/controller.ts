@@ -1,11 +1,34 @@
-import { StripPacket, macString, ipString } from "./wire";
-import dgram from "dgram";
+import { createSocket, Socket } from "dgram";
+import Struct from "struct";
+
+import { ipString, macString } from "./wire";
 
 export default class PixelPusher {
-  constructor(broadcast) {
+  group_id: number;
+  controller_id: number;
+  socket: Socket;
+  strips: any[];
+  packet_number: number;
+  correction: number[];
+  color_temp: number[];
+  color_correction: number[];
+  pixels_per_strip: number;
+  strips_attached: number;
+  software_rev: number;
+  hardware_rev: number;
+  port: number;
+  ip: string;
+  mac: string;
+  pusher_flags: any;
+  delta_sequence: number;
+  update_period: number;
+  max_strips_per_packet: number;
+  last_ping_at: number;
+
+  constructor(broadcast: Struct) {
     this.group_id = broadcast.group_ordinal;
     this.controller_id = broadcast.controller_ordinal;
-    this.socket = dgram.createSocket("udp4");
+    this.socket = createSocket("udp4");
 
     this.updateFromBroadcast(broadcast);
 
@@ -25,12 +48,12 @@ export default class PixelPusher {
     );
   }
 
-  setColorTemperature(c) {
+  setColorTemperature(c: number) {
     this.color_temp = [(c >> 16) & 0xff, (c >> 8) & 0xff, (c >> 0) & 0xff];
     this._computeCorrection();
   }
 
-  setColorCorrection(c) {
+  setColorCorrection(c: number) {
     this.color_correction = [
       (c >> 16) & 0xff,
       (c >> 8) & 0xff,
@@ -39,16 +62,16 @@ export default class PixelPusher {
     this._computeCorrection();
   }
 
-  applyCorrection(colorbuf) {
+  applyCorrection(colorbuf: Array<number>) {
     for (let i = 0; i < colorbuf.length; i++) {
       colorbuf[i] *= this.correction[i % 3];
     }
   }
 
-  updateFromBroadcast(broadcast) {
+  updateFromBroadcast(broadcast: Struct): void {
     this.updateVariables(broadcast);
 
-    //network
+    // network
     const ip = ipString(broadcast);
     this.mac = macString(broadcast);
     this.ip = ip;
@@ -63,24 +86,24 @@ export default class PixelPusher {
     this.pixels_per_strip = broadcast.pixels_per_strip;
   }
 
-  updateVariables(broadcast) {
+  updateVariables(broadcast: Struct): void {
     this.delta_sequence = broadcast.delta_sequence;
     this.update_period = broadcast.update_period;
     this.max_strips_per_packet = broadcast.max_strips_per_packet;
     this.last_ping_at = Date.now();
   }
 
-  setStrip(strip, colorbuf) {
+  setStrip(strip, colorbuf): void {
     this.applyCorrection(colorbuf);
     this.strips.push([strip, colorbuf]);
   }
 
-  _sendPacket() {
+  _sendPacket(): void {
     if (this.strips.length == 0) return;
     const num_strips = Math.min(this.max_strips_per_packet, this.strips.length);
     const num_pixels = this.pixels_per_strip;
 
-    let packet = Buffer.alloc(4 + num_strips * (3 * num_pixels + 1));
+    const packet = Buffer.alloc(4 + num_strips * (3 * num_pixels + 1));
     let offset = 0;
 
     offset = packet.writeUInt32LE(this.packet_number++, offset);
@@ -98,7 +121,7 @@ export default class PixelPusher {
     });
   }
 
-  sendloop() {
+  sendloop(): void {
     if (this.strips.length == 0) {
       return;
     }
@@ -110,11 +133,11 @@ export default class PixelPusher {
     setTimeout(() => this.sendloop(), this.update_period - total_ms);
   }
 
-  sync() {
+  sync(): void {
     this.sendloop();
   }
 
-  toString() {
+  toString(): string {
     return (
       `PixelPusher ${this.group_id}-${this.controller_id}\n` +
       `MAC ${this.mac} IP ${this.ip}:${this.port}\n` +

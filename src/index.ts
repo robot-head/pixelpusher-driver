@@ -1,5 +1,7 @@
-import dgram from "dgram";
+import { createSocket, Socket, AddressInfo } from "dgram";
 import { EventEmitter } from "events";
+import { clearInterval } from "timers";
+
 import PixelPusher from "./controller";
 import PusherBroadcast, { DeviceType, macString } from "./wire";
 
@@ -8,12 +10,16 @@ const CONTROLLER_TIMEOUT_THRESHOLD = 5000;
 const TIMEOUT_INTERVAL = 1000;
 
 export default class PixelPusherRegistry extends EventEmitter {
+  prune_check: NodeJS.Timer;
+  registry: Map<string, PixelPusher>;
+  socket: Socket;
+
   constructor() {
     super();
     this.registry = new Map();
-    this.socket = dgram.createSocket("udp4");
+    this.socket = createSocket("udp4");
 
-    this.socket.on("message", (message, rinfo) => {
+    this.socket.on("message", (message: Buffer, rinfo: AddressInfo) => {
       const broadcast_struct = PusherBroadcast();
       broadcast_struct._setBuff(message);
 
@@ -36,16 +42,16 @@ export default class PixelPusherRegistry extends EventEmitter {
         controller.updateVariables(broadcast);
       }
     });
-    this.socket.on("listening", () => {
+    this.socket.on("listening", (): void => {
       console.info(
         `Listening for pixelpushers on udp://*:${this.socket.address().port}`
       );
     });
   }
 
-  prune() {
+  prune(): void {
     const now = Date.now();
-    for (let [mac, controller] of this.registry) {
+    for (const [mac, controller] of this.registry) {
       if (now - controller.last_ping_at > CONTROLLER_TIMEOUT_THRESHOLD) {
         console.info(`Haven't heard from ${mac} in a while, pruning`);
         this.registry.delete(mac);
@@ -61,6 +67,6 @@ export default class PixelPusherRegistry extends EventEmitter {
 
   stop() {
     this.socket.close();
-    cancelInterval(this.prune_check);
+    clearInterval(this.prune_check);
   }
 }

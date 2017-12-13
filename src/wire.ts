@@ -38,8 +38,8 @@ export const DeviceType = {
   PIXELPUSHER: 2
 };
 
-export function PusherBroadcast() {
-  return Struct()
+export function PusherBroadcast(): Struct {
+  return new Struct()
     .array("mac", 6, "word8")
     .array("ip", 4, "word8")
     .word8("devicetype")
@@ -64,16 +64,16 @@ export function PusherBroadcast() {
 
 export default PusherBroadcast;
 
-export function macString(broadcast) {
-  let mac = [];
+export function macString(broadcast: Struct): string {
+  const mac = [];
   for (let i = 0; i < 6; i++) {
     mac.push(broadcast.mac[i].toString(16));
   }
   return mac.join(":");
 }
 
-export function ipString(broadcast) {
-  let ip = [];
+export function ipString(broadcast: Struct): string {
+  const ip = [];
   for (let i = 0; i < 4; i++) {
     ip.push(broadcast.ip[i].toString());
   }
