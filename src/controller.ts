@@ -1,7 +1,6 @@
 import { createSocket, Socket } from "dgram";
-import Struct from "struct";
 
-import { ipString, macString } from "./wire";
+import { BroadcastStructType, ipString, macString } from "./wire";
 
 export default class PixelPusher {
   group_id: number;
@@ -25,7 +24,7 @@ export default class PixelPusher {
   max_strips_per_packet: number;
   last_ping_at: number;
 
-  constructor(broadcast: Struct) {
+  constructor(broadcast: BroadcastStructType) {
     this.group_id = broadcast.group_ordinal;
     this.controller_id = broadcast.controller_ordinal;
     this.socket = createSocket("udp4");
@@ -35,7 +34,6 @@ export default class PixelPusher {
     this.strips = [];
     this.correction = [];
 
-    this.last_packet = undefined;
     this.packet_number = 0;
     this.color_correction = [0xff, 0xe0, 0x8c];
     this.color_temp = [0xff, 0xff, 0xff];
@@ -68,7 +66,7 @@ export default class PixelPusher {
     }
   }
 
-  updateFromBroadcast(broadcast: Struct): void {
+  updateFromBroadcast(broadcast: BroadcastStructType): void {
     this.updateVariables(broadcast);
 
     // network
@@ -86,14 +84,14 @@ export default class PixelPusher {
     this.pixels_per_strip = broadcast.pixels_per_strip;
   }
 
-  updateVariables(broadcast: Struct): void {
+  updateVariables(broadcast: BroadcastStructType): void {
     this.delta_sequence = broadcast.delta_sequence;
     this.update_period = broadcast.update_period;
     this.max_strips_per_packet = broadcast.max_strips_per_packet;
     this.last_ping_at = Date.now();
   }
 
-  setStrip(strip, colorbuf): void {
+  setStrip(strip: number, colorbuf: number[]): void {
     this.applyCorrection(colorbuf);
     this.strips.push([strip, colorbuf]);
   }

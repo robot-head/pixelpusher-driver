@@ -2,12 +2,13 @@
   "name": "pixelpusher-driver",
   "version": "0.2.0",
   "description": "Modernized pixelpusher library for Node",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "repository": "https://github.com/chlorophyll/pixelpusher-driver",
   "author": "Ryan Pearl <rpearl@endofunctor.org>",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "~8.0.58"
+    "@types/node": "^8.0.58",
+    "@types/ref-struct": "^0.0.28"
   },
   "module": "./src/index.js",
   "scripts": {
@@ -17,6 +18,9 @@
     "tslint": "tslint -c tslint.json -p tsconfig.json"
   },
   "dependencies": {
-    "struct": "^0.0.12"
+    "@types/ref-array": "^0.0.28",
+    "buffer": "^5.0.8",
+    "ref-array": "^1.2.0",
+    "ref-struct": "^1.1.0"
   }
 }
