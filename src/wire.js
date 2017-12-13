@@ -1,4 +1,4 @@
-import Struct from 'struct';
+import Struct from "struct";
 
 /*
 struct pusher_broadcast {
@@ -33,51 +33,49 @@ struct pusher_broadcast {
 }
 */
 export const DeviceType = {
-    ETHERDREAM: 0,
-    LUMIABRIDGE: 1,
-    PIXELPUSHER: 2,
+  ETHERDREAM: 0,
+  LUMIABRIDGE: 1,
+  PIXELPUSHER: 2
 };
 
 export function PusherBroadcast() {
-    return (Struct()
-        .array('mac', 6, 'word8')
-        .array('ip', 4, 'word8')
-        .word8('devicetype')
-        .word8('protocol')
-        .word16Ule('vid')
-        .word16Ule('pid')
-        .word16Ule('hardware_rev')
-        .word16Ule('software_rev')
-        .word32Ule('link_speed')
-        .word8('strips_attached')
-        .word8('max_strips_per_packet')
-        .word16Ule('pixels_per_strip')
-        .word32Ule('update_period')
-        .word32Ule('powertotal')
-        .word32Ule('delta_sequence')
-        .word32Sle('controller_ordinal')
-        .word32Sle('group_ordinal')
-        .word16Ule('artnet_universe')
-        .word16Ule('artnet_channel')
-        .word16Ule('my_port')
-    );
+  return Struct()
+    .array("mac", 6, "word8")
+    .array("ip", 4, "word8")
+    .word8("devicetype")
+    .word8("protocol")
+    .word16Ule("vid")
+    .word16Ule("pid")
+    .word16Ule("hardware_rev")
+    .word16Ule("software_rev")
+    .word32Ule("link_speed")
+    .word8("strips_attached")
+    .word8("max_strips_per_packet")
+    .word16Ule("pixels_per_strip")
+    .word32Ule("update_period")
+    .word32Ule("powertotal")
+    .word32Ule("delta_sequence")
+    .word32Sle("controller_ordinal")
+    .word32Sle("group_ordinal")
+    .word16Ule("artnet_universe")
+    .word16Ule("artnet_channel")
+    .word16Ule("my_port");
 }
 
 export default PusherBroadcast;
 
 export function macString(broadcast) {
-    let mac = [];
-    for (let i = 0; i < 6; i++) {
-        mac.push(broadcast.mac[i].toString(16));
-    }
-    return mac.join(':');
+  let mac = [];
+  for (let i = 0; i < 6; i++) {
+    mac.push(broadcast.mac[i].toString(16));
+  }
+  return mac.join(":");
 }
 
 export function ipString(broadcast) {
-    let ip = [];
-    for (let i = 0; i < 4; i++) {
-        ip.push(broadcast.ip[i].toString());
-    }
-    return ip.join('.');
+  let ip = [];
+  for (let i = 0; i < 4; i++) {
+    ip.push(broadcast.ip[i].toString());
+  }
+  return ip.join(".");
 }
-
