@@ -1,4 +1,6 @@
-import Struct from "struct";
+import * as ref from "ref";
+import * as RefArray from "ref-array";
+import * as RefStruct from "ref-struct";
 
 /*
 struct pusher_broadcast {
@@ -32,47 +34,97 @@ struct pusher_broadcast {
   uint16 last_driven_port;
 }
 */
+const UINT8 = ref.types.uint8;
+const UINT16 = ref.types.uint16;
+const UINT32 = ref.types.uint32;
+const INT8 = ref.types.int8;
+const INT16 = ref.types.int16;
+const INT32 = ref.types.int32;
+const ARR_UINT8 = RefArray(UINT8);
+
+export interface BroadcastStructType extends RefStruct {
+  mac: number[];
+  ip: number[];
+  devicetype: number;
+  protocol: number;
+  vid: number;
+  pid: number;
+  hardware_rev: number;
+  software_rev: number;
+  link_speed: number;
+  strips_attached: number;
+  max_strips_per_packet: number;
+  pixels_per_strip: number;
+  update_period: number;
+  powertotal: number;
+  delta_sequence: number;
+  controller_ordinal: number;
+  group_ordinal: number;
+  artnet_universe: number;
+  artnet_channel: number;
+  my_port: number;
+  padding_1: number;
+  strip_flags: number[];
+  padding_2: number;
+  pusher_flags: number;
+  segments: number;
+  power_domain: number;
+  last_driven_ip: number[];
+  last_driven_port: number;
+}
+
+export const BroadcastStruct = <BroadcastStructType>RefStruct({
+  mac: ARR_UINT8(6),
+  ip: ARR_UINT8(4),
+  devicetype: UINT8,
+  protocol: UINT8,
+  vid: UINT16,
+  pid: UINT16,
+  hardware_rev: UINT16,
+  software_rev: UINT16,
+  link_speed: UINT32,
+  strips_attached: UINT8,
+  max_strips_per_packet: UINT8,
+  pixels_per_strip: UINT16,
+  update_period: UINT32,
+  powertotal: UINT32,
+  delta_sequence: UINT32,
+  controller_ordinal: INT32,
+  group_ordinal: INT32,
+  artnet_universe: UINT16,
+  artnet_channel: UINT16,
+  my_port: UINT16,
+  padding_1: UINT16,
+  strip_flags: ARR_UINT8(8),
+  padding_2: UINT16,
+  pusher_flags: UINT32,
+  segments: UINT32,
+  power_domain: UINT32,
+  last_driven_ip: ARR_UINT8(4),
+  last_driven_port: UINT16
+});
+
 export const DeviceType = {
   ETHERDREAM: 0,
   LUMIABRIDGE: 1,
   PIXELPUSHER: 2
 };
 
-export function PusherBroadcast(): Struct {
-  return new Struct()
-    .array("mac", 6, "word8")
-    .array("ip", 4, "word8")
-    .word8("devicetype")
-    .word8("protocol")
-    .word16Ule("vid")
-    .word16Ule("pid")
-    .word16Ule("hardware_rev")
-    .word16Ule("software_rev")
-    .word32Ule("link_speed")
-    .word8("strips_attached")
-    .word8("max_strips_per_packet")
-    .word16Ule("pixels_per_strip")
-    .word32Ule("update_period")
-    .word32Ule("powertotal")
-    .word32Ule("delta_sequence")
-    .word32Sle("controller_ordinal")
-    .word32Sle("group_ordinal")
-    .word16Ule("artnet_universe")
-    .word16Ule("artnet_channel")
-    .word16Ule("my_port");
-}
+export default () => {
+  return new BroadcastStruct();
+};
 
-export default PusherBroadcast;
-
-export function macString(broadcast: Struct): string {
+export function macString(broadcast: BroadcastStructType): string {
   const mac = [];
+
   for (let i = 0; i < 6; i++) {
-    mac.push(broadcast.mac[i].toString(16));
+    const mac_element = broadcast.mac[i];
+    mac.push(mac_element.toString(16));
   }
   return mac.join(":");
 }
 
-export function ipString(broadcast: Struct): string {
+export function ipString(broadcast: BroadcastStructType): string {
   const ip = [];
   for (let i = 0; i < 4; i++) {
     ip.push(broadcast.ip[i].toString());
